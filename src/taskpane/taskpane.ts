@@ -3,7 +3,7 @@
  * See LICENSE in the project root for license information.
  */
 
-/* global document, Office, Word, console, Event, HTMLElement */
+/* global document, Office, Word */
 
 interface GrammarError {
   position: number;
@@ -34,14 +34,19 @@ Office.onReady((info) => {
 async function checkText() {
   try {
     await Word.run(async (context) => {
-      // Lấy văn bản được chọn
+      // Kiểm tra xem có đoạn văn bản nào được chọn không
       const selection = context.document.getSelection();
       selection.load("text");
       await context.sync();
 
-      // Giả lập gọi API kiểm tra lỗi
-      // const result = await mockGrammarCheck(selection.text);
+      if (!selection.text || selection.text.trim() === "") {
+        // Hiển thị thông báo nếu không có text được chọn
+        document.getElementById("error-list").innerHTML = 
+          '<div class="error-card" style="color: #d13438">Vui lòng chọn đoạn văn bản cần kiểm tra</div>';
+        return;
+      }
 
+      // Phần code kiểm tra lỗi chính tả
       const result = {
         status: "success",
         errors: [
@@ -67,14 +72,18 @@ async function checkText() {
           },
         ],
       };
+
       if (result.status === "success") {
         updateStats(result.errors.length, 0);
-        highlightErrors(result.errors, context);
+        await highlightErrors(result.errors, context);
         displayErrors(result.errors);
       }
     });
   } catch (error) {
-    console.error("Error: " + error);
+    //console.error("Error: " + error);
+    // Hiển thị thông báo lỗi cho người dùng
+    document.getElementById("error-list").innerHTML = 
+      `<div class="error-card" style="color: #d13438">Đã xảy ra lỗi: ${error.message}</div>`;
   }
 }
 
@@ -112,26 +121,29 @@ async function checkText() {
 }*/
 
 async function highlightErrors(errors: GrammarError[], context: Word.RequestContext) {
-  // Đầu tiên load toàn bộ text được chọn
-  const selection = context.document.getSelection();
-  selection.load("text");
-  await context.sync();
-
-  // Tìm và highlight từng lỗi
-  for (const error of errors) {
-    const range = selection.search(error.wrongWord, {
-      matchCase: true,
-      matchWholeWord: true,
-    });
-    range.load("text");
+  try {
+    const selection = context.document.getSelection();
+    selection.load("text");
     await context.sync();
 
-    // Chỉ đổi màu nếu tìm thấy từ
-    if (range && range.items.length > 0) {
-      range.items[0].font.color = "yellow";
+    for (const error of errors) {
+      const range = selection.search(error.wrongWord, {
+        matchCase: true,
+        matchWholeWord: true,
+      });
+      range.load("text");
+      await context.sync();
+
+      // Kiểm tra kỹ hơn trước khi highlight
+      if (range && range.items && range.items.length > 0) {
+        range.items[0].font.color = "yellow";
+      }
     }
+    await context.sync();
+  } catch (error) {
+    console.error("Error highlighting text:", error);
+    throw error; // Ném lỗi để hàm gọi có thể xử lý
   }
-  await context.sync();
 }
 
 function updateStats(total: number, fixed: number) {
