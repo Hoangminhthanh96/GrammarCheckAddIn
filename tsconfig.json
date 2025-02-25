@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "downlevelIteration": true,//Add by Thanh
     "allowJs": true,
     "baseUrl": ".",
     "esModuleInterop": true,
@@ -22,5 +23,5 @@
   ],
   "ts-node": { 
     "files": true 
-  }
+  },
 }

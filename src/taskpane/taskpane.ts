@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /*
  * Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
  * See LICENSE in the project root for license information.
@@ -7,8 +8,8 @@
 
 interface GrammarError {
   position: number;
-  wrongWord: string;
-  suggestionWords: string[];
+  word: string;
+  suggestions: string[];
 }
 
 interface CheckResult {
@@ -33,6 +34,26 @@ Office.onReady((info) => {
 
 async function checkText() {
   try {
+    /*
+    // Reset tất cả thông tin từ lần kiểm tra trước
+    stats = {
+      totalErrors: 0,
+      fixedErrors: 0,
+      remainingErrors: 0,
+      currentErrors: [],
+    };
+    
+    // Xóa nội dung các container hiển thị
+    document.getElementById("error-list").innerHTML = "";
+    document.getElementById("positions-list").innerHTML = "";
+    const rangeInfo = document.getElementById("range-info");
+    if (rangeInfo) {
+      rangeInfo.remove();
+    }
+    */
+    // Hiển thị biểu tượng loading
+    document.getElementById("loading").style.display = "block";
+
     await Word.run(async (context) => {
       // Kiểm tra xem có đoạn văn bản nào được chọn không
       const selection = context.document.getSelection();
@@ -41,38 +62,40 @@ async function checkText() {
 
       if (!selection.text || selection.text.trim() === "") {
         // Hiển thị thông báo nếu không có text được chọn
-        document.getElementById("error-list").innerHTML = 
+        document.getElementById("error-list").innerHTML =
           '<div class="error-card" style="color: #d13438">Vui lòng chọn đoạn văn bản cần kiểm tra</div>';
         return;
       }
 
-      // Phần code kiểm tra lỗi chính tả
-      const result = {
+      const result = await grammarCheck(selection.text);
+      /*const result = {
         status: "success",
+        has_errors: true,
         errors: [
           {
-            position: 0,
-            wrongWord: "Loi",
-            suggestionWords: ["Lỗi", "Lời"],
+            word: "đona",
+            suggestions: ["đoạn"],
+            position: 25,
           },
           {
-            position: 4,
-            wrongWord: "xai",
-            suggestionWords: ["sai", "xài", "xa"],
+            word: "ban",
+            suggestions: ["bản"],
+            position: 34,
           },
           {
-            position: 8,
-            wrongWord: "chinh",
-            suggestionWords: ["chính", "chình"],
+            word: "loi",
+            suggestions: ["loại", "sai"],
+            position: 41,
           },
           {
-            position: 14,
-            wrongWord: "ta",
-            suggestionWords: ["tả", "tà"],
+            word: "xai",
+            suggestions: ["loại", "sai"],
+            position: 45,
           },
         ],
-      };
-
+        corrected_text: "Hoa ban trắng nở rộ. Một đoạn văn bản về loại sai chính tả. Cần hoàn thiên đoạn này ngay. ",
+        processing_time: 0.2884,
+      };*/
       if (result.status === "success") {
         updateStats(result.errors.length, 0);
         await highlightErrors(result.errors, context);
@@ -82,43 +105,42 @@ async function checkText() {
   } catch (error) {
     //console.error("Error: " + error);
     // Hiển thị thông báo lỗi cho người dùng
-    document.getElementById("error-list").innerHTML = 
+    document.getElementById("error-list").innerHTML =
       `<div class="error-card" style="color: #d13438">Đã xảy ra lỗi: ${error.message}</div>`;
+  } finally {
+    // Ẩn biểu tượng loading
+    document.getElementById("loading").style.display = "none";
   }
 }
 
-/*async function mockGrammarCheck(text: string): Promise<CheckResult> {
-  // Giả lập API call - thay thế bằng API thật sau này
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        status: "success",
-        errors: [
-          {
-            position: 0,
-            wrongWord: "Loi",
-            suggestionWords: ["Lỗi"],
-          },
-          {
-            position: 4,
-            wrongWord: "xai",
-            suggestionWords: ["sai"],
-          },
-          {
-            position: 8,
-            wrongWord: "chinh",
-            suggestionWords: ["chính"],
-          },
-          {
-            position: 14,
-            wrongWord: "ta",
-            suggestionWords: ["tả"],
-          },
-        ],
-      });
-    }, 1000);
-  });
-}*/
+async function grammarCheck(text: string): Promise<CheckResult> {
+  const apiUrl = "https://spellcheck.vcntt.tech/spellcheck";
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+
+    const result: CheckResult = await response.json();
+    return result;
+  } catch (error) {
+    // Thay thế console.error
+    document.getElementById("error-list").innerHTML =
+      `<div class="error-card" style="color: #d13438">Lỗi khi gọi API kiểm tra ngữ pháp: ${error.message}</div>`;
+    return {
+      status: "error",
+      errors: [],
+    };
+  }
+}
 
 async function highlightErrors(errors: GrammarError[], context: Word.RequestContext) {
   try {
@@ -127,22 +149,36 @@ async function highlightErrors(errors: GrammarError[], context: Word.RequestCont
     await context.sync();
 
     for (const error of errors) {
-      const range = selection.search(error.wrongWord, {
+      const text = selection.text;
+      const regex = new RegExp(error.word, "g");
+      const matches = [...text.matchAll(regex)];
+
+      const positions = matches.map((match, index) => ({
+        startIndex: match.index!,
+        text: match[0], // Lấy từ đã khớp
+        ordnumber: index, // Số thứ tự bắt đầu từ 1
+      }));
+      let position = positions.find((p) => p.startIndex == error.position);
+      const range = selection.search(error.word, {
         matchCase: true,
         matchWholeWord: true,
       });
       range.load("text");
       await context.sync();
 
-      // Kiểm tra kỹ hơn trước khi highlight
-      if (range && range.items && range.items.length > 0) {
+      /*if (range && range.items && range.items.length > 0) {
         range.items[0].font.color = "yellow";
+      }*/
+      if (range && range.items.length > 0 && position && range.items[position.ordnumber] != null) {
+        range.items[position.ordnumber].font.color = "yellow";
       }
     }
     await context.sync();
   } catch (error) {
-    console.error("Error highlighting text:", error);
-    throw error; // Ném lỗi để hàm gọi có thể xử lý
+    // Thay thế console.error
+    document.getElementById("error-list").innerHTML =
+      `<div class="error-card" style="color: #d13438">Lỗi khi đánh dấu văn bản: ${error.message}</div>`;
+    throw error;
   }
 }
 
@@ -159,7 +195,7 @@ function updateStats(total: number, fixed: number) {
 function displayErrors(errors: GrammarError[]) {
   const container = document.getElementById("error-list");
   container.innerHTML = "";
-  
+
   // Lưu lại các lỗi hiện tại
   stats.currentErrors = errors;
 
@@ -169,15 +205,14 @@ function displayErrors(errors: GrammarError[]) {
     card.innerHTML = `
       <div class="wrong-word">
         <span class="error-label">Lỗi:</span>
-        ${error.wrongWord}
+        ${error.word}
       </div>
       <div class="suggestions">
         <span class="suggestion-label">Gợi ý:</span>
         <div class="suggestion-chips">
-          ${error.suggestionWords
+          ${error.suggestions
             .map(
-              (word) =>
-                `<span class="suggestion-chip" data-error-index="${index}" data-word="${word}">${word}</span>`
+              (word) => `<span class="suggestion-chip" data-error-index="${index}" data-word="${word}">${word}</span>`
             )
             .join("")}
         </div>
@@ -195,46 +230,99 @@ function displayErrors(errors: GrammarError[]) {
 async function applySuggestion(event: Event) {
   const chip = event.target as HTMLElement;
   const card = chip.closest(".error-card");
-  
+
   // Kiểm tra nếu card đã được sửa thì không làm gì cả
   if (card.classList.contains("fixed")) {
     return;
   }
 
-  const word = chip.getAttribute("data-word");
+  const wordFixed = chip.getAttribute("data-word");
   const errorIndex = parseInt(chip.getAttribute("data-error-index"));
 
   try {
     await Word.run(async (context) => {
       const selection = context.document.getSelection();
-      const wrongWord = stats.currentErrors[errorIndex].wrongWord;
-      const range = selection.search(wrongWord, {
+      selection.load("text");
+      await context.sync();
+
+      let text = selection.text;
+      const word = stats.currentErrors[errorIndex].word;
+      const regex = new RegExp(word, "g");
+      const matches = [...text.matchAll(regex)];
+
+      const positions = matches.map((match, index) => ({
+        startIndex: match.index!,
+        text: match[0], // Lấy từ đã khớp
+        ordnumber: index, // Số thứ tự bắt đầu từ 1
+      }));
+
+      // Hiển thị nội dung của positions ra UI
+      //const positionsContainer = document.getElementById("positions-list");
+      /*positionsContainer.innerHTML = positions
+        .map((pos) => `<div> ${pos.text} (Vị trí: ${pos.startIndex}, Thứ tự: ${pos.ordnumber})</div>`)
+        .join("");*/
+
+      let position = positions.find((p) => p.startIndex == stats.currentErrors[errorIndex].position);
+      //positionsContainer.innerHTML = `<div> ${position.text} (Vị trí: ${position.startIndex}, Thứ tự: ${position.ordnumber + 1})</div>`;
+      const range = selection.search(word, {
         matchCase: true,
         matchWholeWord: true,
       });
       range.load("text");
       await context.sync();
+      /*
+      // Thêm div mới để hiển thị thông tin về range
+      const rangeInfo = document.createElement("div");
+      rangeInfo.id = "range-info";
+      positionsContainer.appendChild(rangeInfo);
+      rangeInfo.innerHTML = `
+        <div>Thông tin về Range:</div>
+        <div>Tổng số kết quả tìm thấy: ${range.items.length}</div>
+        ${range.items
+          .map(
+            (item, index) => `
+          <div>Kết quả #${index}:
+            <ul>
+              <li>Văn bản: ${item.text}</li>
+            </ul>
+          </div>
+        `
+          )
+          .join("")}
+      `;*/
 
-      if (range && range.items.length > 0) {
-        range.items[0].insertText(word, Word.InsertLocation.replace);
-        range.items[0].font.color = "green";
+      // Kiểm tra xem có tồn tại range.items[position.ordnumber] hay không
+      if (range && range.items.length > 0 && position && range.items[position.ordnumber] != null) {
+        range.items[position.ordnumber].insertText(wordFixed, Word.InsertLocation.replace);
+        range.items[position.ordnumber].font.color = "green";
+        await context.sync();
+
+        // Tính toán độ chênh lệch độ dài giữa từ cũ và từ mới
+        const lengthDiff = wordFixed.length - word.length;
+
+        // Cập nhật position cho các lỗi còn lại
+        stats.currentErrors.forEach((error, idx) => {
+          if (idx > errorIndex && error.position > position.startIndex) {
+            error.position += lengthDiff;
+          }
+        });
+
+        // Cập nhật UI và stats như cũ
+        stats.fixedErrors++;
+        stats.remainingErrors--;
+        updateStats(stats.totalErrors, stats.fixedErrors);
+
+        // Đánh dấu card đã sửa
+        card.classList.add("fixed");
+
+        // Disable tất cả các suggestion chips trong card này
+        card.querySelectorAll(".suggestion-chip").forEach((chip) => {
+          (chip as HTMLElement).style.pointerEvents = "none";
+        });
       }
-      await context.sync();
-
-      // Cập nhật UI
-      stats.fixedErrors++;
-      stats.remainingErrors--;
-      updateStats(stats.totalErrors, stats.fixedErrors);
-
-      // Đánh dấu card đã sửa
-      card.classList.add("fixed");
-      
-      // Disable tất cả các suggestion chips trong card này
-      card.querySelectorAll(".suggestion-chip").forEach((chip) => {
-        (chip as HTMLElement).style.pointerEvents = "none";
-      });
     });
   } catch (error) {
-    console.error("Error: " + error);
+    document.getElementById("error-list").innerHTML =
+      `<div class="error-card" style="color: #d13438">Lỗi khi áp dụng gợi ý: ${error.message}</div>`;
   }
 }
