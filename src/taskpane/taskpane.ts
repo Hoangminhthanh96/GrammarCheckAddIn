@@ -68,34 +68,6 @@ async function checkText() {
       }
 
       const result = await grammarCheck(selection.text);
-      /*const result = {
-        status: "success",
-        has_errors: true,
-        errors: [
-          {
-            word: "đona",
-            suggestions: ["đoạn"],
-            position: 25,
-          },
-          {
-            word: "ban",
-            suggestions: ["bản"],
-            position: 34,
-          },
-          {
-            word: "loi",
-            suggestions: ["loại", "sai"],
-            position: 41,
-          },
-          {
-            word: "xai",
-            suggestions: ["loại", "sai"],
-            position: 45,
-          },
-        ],
-        corrected_text: "Hoa ban trắng nở rộ. Một đoạn văn bản về loại sai chính tả. Cần hoàn thiên đoạn này ngay. ",
-        processing_time: 0.2884,
-      };*/
       if (result.status === "success") {
         updateStats(result.errors.length, 0);
         await highlightErrors(result.errors, context);
@@ -103,7 +75,6 @@ async function checkText() {
       }
     });
   } catch (error) {
-    //console.error("Error: " + error);
     // Hiển thị thông báo lỗi cho người dùng
     document.getElementById("error-list").innerHTML =
       `<div class="error-card" style="color: #d13438">Đã xảy ra lỗi: ${error.message}</div>`;
@@ -116,7 +87,7 @@ async function checkText() {
 async function grammarCheck(text: string): Promise<CheckResult> {
   const apiUrl = "https://spellcheck.vcntt.tech/spellcheck";
   const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-  const debugContainer = document.getElementById("error-list");
+  const debugContainer = document.getElementById("debug-container");
 
   try {
     // Hiển thị thông tin request
@@ -189,7 +160,7 @@ async function highlightErrors(errors: GrammarError[], context: Word.RequestCont
 
     for (const error of errors) {
       const text = selection.text;
-      const regex = new RegExp(error.word, "g");
+      const regex = new RegExp(`(?<!\\w)${error.word}(?!\\w)`, "g");
       const matches = [...text.matchAll(regex)];
 
       const positions = matches.map((match, index) => ({
@@ -197,7 +168,16 @@ async function highlightErrors(errors: GrammarError[], context: Word.RequestCont
         text: match[0], // Lấy từ đã khớp
         ordnumber: index, // Số thứ tự bắt đầu từ 1
       }));
+
+      // Hiển thị nội dung của positions ra UI
+      const positionsContainer = document.getElementById("debug-container");
+      positionsContainer.innerHTML = positions
+        .map((pos) => `<div> ${pos.text} (Vị trí từ: ${pos.startIndex}, Thứ tự: ${pos.ordnumber})</div>`)
+        .join("");
+
       let position = positions.find((p) => p.startIndex == error.position);
+      positionsContainer.innerHTML += `Vị trí lỗi sai: <div> ${position.text} (Vị trí: ${position.startIndex}, Thứ tự: ${position.ordnumber})</div>`;
+
       const range = selection.search(error.word, {
         matchCase: true,
         matchWholeWord: true,
@@ -205,9 +185,26 @@ async function highlightErrors(errors: GrammarError[], context: Word.RequestCont
       range.load("text");
       await context.sync();
 
-      /*if (range && range.items && range.items.length > 0) {
-        range.items[0].font.color = "yellow";
-      }*/
+      // Thêm div mới để hiển thị thông tin về range
+      const rangeInfo = document.createElement("div");
+      rangeInfo.id = "range-info";
+      positionsContainer.appendChild(rangeInfo);
+      rangeInfo.innerHTML = `
+        <div>Thông tin về Range:</div>
+        <div>Tổng số kết quả tìm thấy: ${range.items.length}</div>
+        ${range.items
+          .map(
+            (item, index) => `
+          <div>Kết quả #${index}:
+            <ul>
+              <li>Văn bản: ${item.text}</li>
+            </ul>
+          </div>
+        `
+          )
+          .join("")}
+      `;
+
       if (range && range.items.length > 0 && position && range.items[position.ordnumber] != null) {
         range.items[position.ordnumber].font.color = "yellow";
       }
@@ -286,7 +283,7 @@ async function applySuggestion(event: Event) {
 
       let text = selection.text;
       const word = stats.currentErrors[errorIndex].word;
-      const regex = new RegExp(word, "g");
+      const regex = new RegExp(`(?<!\\w)${word}(?!\\w)`, "g");
       const matches = [...text.matchAll(regex)];
 
       const positions = matches.map((match, index) => ({
@@ -294,12 +291,6 @@ async function applySuggestion(event: Event) {
         text: match[0], // Lấy từ đã khớp
         ordnumber: index, // Số thứ tự bắt đầu từ 1
       }));
-
-      // Hiển thị nội dung của positions ra UI
-      //const positionsContainer = document.getElementById("positions-list");
-      /*positionsContainer.innerHTML = positions
-        .map((pos) => `<div> ${pos.text} (Vị trí: ${pos.startIndex}, Thứ tự: ${pos.ordnumber})</div>`)
-        .join("");*/
 
       let position = positions.find((p) => p.startIndex == stats.currentErrors[errorIndex].position);
       //positionsContainer.innerHTML = `<div> ${position.text} (Vị trí: ${position.startIndex}, Thứ tự: ${position.ordnumber + 1})</div>`;
@@ -309,26 +300,6 @@ async function applySuggestion(event: Event) {
       });
       range.load("text");
       await context.sync();
-      /*
-      // Thêm div mới để hiển thị thông tin về range
-      const rangeInfo = document.createElement("div");
-      rangeInfo.id = "range-info";
-      positionsContainer.appendChild(rangeInfo);
-      rangeInfo.innerHTML = `
-        <div>Thông tin về Range:</div>
-        <div>Tổng số kết quả tìm thấy: ${range.items.length}</div>
-        ${range.items
-          .map(
-            (item, index) => `
-          <div>Kết quả #${index}:
-            <ul>
-              <li>Văn bản: ${item.text}</li>
-            </ul>
-          </div>
-        `
-          )
-          .join("")}
-      `;*/
 
       // Kiểm tra xem có tồn tại range.items[position.ordnumber] hay không
       if (range && range.items.length > 0 && position && range.items[position.ordnumber] != null) {
