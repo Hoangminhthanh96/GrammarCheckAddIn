@@ -115,26 +115,65 @@ async function checkText() {
 
 async function grammarCheck(text: string): Promise<CheckResult> {
   const apiUrl = "https://spellcheck.vcntt.tech/spellcheck";
+  const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+  const debugContainer = document.getElementById("error-list");
 
   try {
-    const response = await fetch(apiUrl, {
+    // Hiển thị thông tin request
+    debugContainer.innerHTML = `
+      <div class="error-card">
+        <div>Đang gọi API với text:</div>
+        <div style="word-break: break-all;">${text}</div>
+      </div>
+    `;
+
+    const response = await fetch(proxyUrl + apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ text }),
+      mode: "cors",
+      body: JSON.stringify({ text: text }),
     });
 
+    // Hiển thị thông tin response status
+    debugContainer.innerHTML += `
+      <div class="error-card">
+        <div>Trạng thái phản hồi API:</div>
+        <div>Status: ${response.status}</div>
+        <div>StatusText: ${response.statusText}</div>
+      </div>
+    `;
+
     if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      // Hiển thị chi tiết lỗi
+      debugContainer.innerHTML += `
+        <div class="error-card" style="color: #d13438">
+          <div>Lỗi từ API:</div>
+          <div>${errorText}</div>
+        </div>
+      `;
+      throw new Error(`API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
-    const result: CheckResult = await response.json();
+    const result = await response.json();
+    // Hiển thị kết quả API
+    debugContainer.innerHTML += `
+      <div class="error-card">
+        <div>Dữ liệu phản hồi từ API:</div>
+        <pre style="white-space: pre-wrap;">${JSON.stringify(result, null, 2)}</pre>
+      </div>
+    `;
     return result;
   } catch (error) {
-    // Thay thế console.error
-    document.getElementById("error-list").innerHTML =
-      `<div class="error-card" style="color: #d13438">Lỗi khi gọi API kiểm tra ngữ pháp: ${error.message}</div>`;
+    // Hiển thị lỗi nếu có
+    debugContainer.innerHTML += `
+      <div class="error-card" style="color: #d13438">
+        <div>Lỗi khi gọi API kiểm tra ngữ pháp:</div>
+        <div>${error.message}</div>
+      </div>
+    `;
     return {
       status: "error",
       errors: [],
