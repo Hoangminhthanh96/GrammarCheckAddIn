@@ -79,21 +79,31 @@ b {
     font-weight: bold;
 }
 
+.error { color: #d13438; }
+.success { color: #107c10; }
+.warning { color: #ff8c00; }
+
+#stats-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 5px;
+}
+
 .stat-card {
-    padding: 10px;
-    margin: 5px;
+    flex: 1;
+    padding: 5px;
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+    background: #fff;
+    /*min-width: 70px;*/
 }
 
 .stat-value {
     font-weight: bold;
     margin-left: 5px;
 }
-
-.error { color: #d13438; }
-.success { color: #107c10; }
-.warning { color: #ff8c00; }
 
 #error-list{
     margin-top: 10px;
@@ -155,7 +165,7 @@ b {
 
 .error-label {
     color: #666;
-    margin-right: 8px;
+    margin-right: 2px;
 }
 
 .wrong-word span:last-child {
@@ -194,22 +204,6 @@ b {
 .suggestion-chip:hover {
     background: #e1dfdd;
     transform: translateY(-1px);
-}
-
-#stats-container {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0px;
-    gap: 0px;
-}
-
-.stat-card {
-    flex: 1;
-    padding: 12px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    text-align: center;
-    background: #fff;
 }
 
 #check-text {
