@@ -68,6 +68,35 @@ async function checkText() {
       }
 
       const result = await grammarCheck(selection.text);
+      /*const result = {
+        status: "success",
+        has_errors: true,
+        errors: [
+          {
+            word: "ẫn",
+            suggestions: ["dẫn"],
+            position: 343,
+          },
+          {
+            word: "chãy",
+            suggestions: ["chảy"],
+            position: 502,
+          },
+          {
+            word: "vậc",
+            suggestions: ["vật", "vã", "trở", "về", "vội", "vã", "ra", "đi"],
+            position: 671,
+          },
+          {
+            word: "củ",
+            suggestions: ["cũ"],
+            position: 1082,
+          },
+        ],
+        corrected_text:
+          "Trong một ngôi làng nhỏ nằm giữa những ngọn đồi trập trùng, có một cậu bé tên là Nam. Cậu sống cùng ông bà trong một căn nhà gỗ nhỏ bé nhưng ấm cúng. Hằng ngày, Nam thường dậy từ sớm để phụ giúp ông bà làm việc nhà, sau đó cậu lại chạy ra đồng chơi đùa cùng lũ bạn. Một hôm, khi đang chơi gần bìa rừng, Nam vô tình phát hiên một con đường nhỏ dẫn sau những bụi cây rậm rạp. Vì tò mò, cậu quyết định đi theo con đường ấy mà không hề báo với ai. \nĐi được một đoạn, Nam bắt gặp một con suối trong vắt, nước chảy róc rách nghe thật vui tai. Bên cạnh con suối là một cái cây cổ thụ to lớn, trên cành cây có một cái tổ chim với mấy chú chim non đang đợi mẹ mang thức ăn về. Cảnh vật xung quanh thật đẹp làm Nam mê mẫng, cậu cứ đứng đó ngắm nhìn mà quên mất thời gian. Đến khi mặt trời bắt đầu khuất sau những rặng cây, Nam mới giật mình nhớ ra rằng mình đã đi quá xa. \nCậu vội vã quay trở về, nhưng càng đi càng thấy mọi thứ xung quanh trở nên lạ lấm. Nam hoang mang, không biết phải làm sao. Đúng lúc đó, cậu nghe thấy tiếng gọi quen thuộc của ông. Nhờ vào tiếng gọi ấy, Nam lần theo đường cũ và tìm được lối ra khỏi rừng. Khi trở về nhà, ông bà trách mắng Nam một hồi, nhưng sau cùng vẫn ôm cậu vào lòng, dặn dò cậu rằng lần sau không được tự ý đi vào rừng nửa. Nam gật đầu lia lịa, tự hứa với mình rằng sẽ không bao giờ để bản thân rơi vào tình huống như vậy lần nào nửa. ",
+        processing_time: 1.7545,
+      };*/
       if (result.status === "success") {
         updateStats(result.errors.length, 0);
         await highlightErrors(result.errors, context);
@@ -206,7 +235,7 @@ async function highlightErrors(errors: GrammarError[], context: Word.RequestCont
       `;
 
       if (range && range.items.length > 0 && position && range.items[position.ordnumber] != null) {
-        range.items[position.ordnumber].font.color = "yellow";
+        range.items[position.ordnumber].font.color = "red";
       }
     }
     await context.sync();
@@ -239,16 +268,17 @@ function displayErrors(errors: GrammarError[]) {
     const card = document.createElement("div");
     card.className = "error-card";
     card.innerHTML = `
-      <div class="wrong-word">
-        <span class="error-label">Lỗi:</span>
-        ${error.word}
-      </div>
-      <div class="suggestions">
-        <span class="suggestion-label">Gợi ý:</span>
-        <div class="suggestion-chips">
+      <div style="display: flex; align-items: center; flex-grow: 1">
+        <div class="wrong-word-container">
+          <div class="wrong-word" style="color: #d13438; font-weight: bold; border: 1px solid #d13438; padding: 4px 8px; border-radius: 12px;">
+            ${error.word}
+          </div>
+        </div>
+        <div class="suggestions" style="display: flex; gap: 8px; flex-wrap: wrap; flex-grow: 1;">
           ${error.suggestions
             .map(
-              (word) => `<span class="suggestion-chip" data-error-index="${index}" data-word="${word}">${word}</span>`
+              (word) =>
+                `<span class="suggestion-chip" data-error-index="${index}" data-word="${word}" style="color: #107c10; border: 1px solid #107c10; padding: 4px 8px; border-radius: 12px;">${word}</span>`
             )
             .join("")}
         </div>
