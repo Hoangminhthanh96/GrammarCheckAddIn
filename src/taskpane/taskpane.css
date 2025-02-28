@@ -115,7 +115,7 @@ b {
 .error-card {
     margin: 5px 0;
     padding: 5px;
-    border: 2px solid red;
+    border: 1px solid rgb(223, 95, 95);
     border-radius: 4px;
     background: transparent;
     display: flex;
@@ -152,7 +152,6 @@ b {
 }
 
 .wrong-word-container {
-    /*width: 50px;*/
     margin-right: 10px;
 }
 
@@ -219,5 +218,21 @@ b {
 }
 
 #check-text:hover {
+    background: #106ebe;
+}
+
+#fix-all{
+    width: 100%;
+    margin: 0px 0;
+    padding: 10px;
+    background: #0078d4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+#fix-all:hover{
     background: #106ebe;
 }

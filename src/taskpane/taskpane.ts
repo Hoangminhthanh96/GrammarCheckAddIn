@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable no-undef */
 /*
  * Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
@@ -21,14 +22,16 @@ let stats = {
   totalErrors: 0,
   fixedErrors: 0,
   remainingErrors: 0,
-  currentErrors: [] as GrammarError[],
 };
+let errorList = [] as GrammarError[];
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Word) {
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
     document.getElementById("check-text").onclick = checkText;
+    document.getElementById("fix-all").onclick = fixAll;
+    document.getElementById("accept").onclick = acceptChanges;
   }
 });
 
@@ -98,9 +101,13 @@ async function checkText() {
         processing_time: 1.7545,
       };*/
       if (result.status === "success") {
+        // Lưu lại các lỗi hiện tại
+        errorList = result.errors;
         updateStats(result.errors.length, 0);
         await highlightErrors(result.errors, context);
         displayErrors(result.errors);
+        document.getElementById("fix-all").style.display = "block"; // Hiển thị nút sửa tất cả
+        //document.getElementById("accept").style.display = "block"; // Hiển thị nút xác nhận
       }
     });
   } catch (error) {
@@ -119,13 +126,13 @@ async function grammarCheck(text: string): Promise<CheckResult> {
   const debugContainer = document.getElementById("debug-container");
 
   try {
-    // Hiển thị thông tin request
+    /*// Hiển thị thông tin request
     debugContainer.innerHTML = `
       <div class="error-card">
         <div>Đang gọi API với text:</div>
         <div style="word-break: break-all;">${text}</div>
       </div>
-    `;
+    `;*/
 
     const response = await fetch(proxyUrl + apiUrl, {
       method: "POST",
@@ -136,35 +143,35 @@ async function grammarCheck(text: string): Promise<CheckResult> {
       body: JSON.stringify({ text: text }),
     });
 
-    // Hiển thị thông tin response status
+    /*// Hiển thị thông tin response status
     debugContainer.innerHTML += `
       <div class="error-card">
         <div>Trạng thái phản hồi API:</div>
         <div>Status: ${response.status}</div>
         <div>StatusText: ${response.statusText}</div>
       </div>
-    `;
+    `;*/
 
     if (!response.ok) {
       const errorText = await response.text();
-      // Hiển thị chi tiết lỗi
+      /*// Hiển thị chi tiết lỗi
       debugContainer.innerHTML += `
         <div class="error-card" style="color: #d13438">
           <div>Lỗi từ API:</div>
           <div>${errorText}</div>
         </div>
-      `;
+      `;*/
       throw new Error(`API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const result = await response.json();
-    // Hiển thị kết quả API
+    /*// Hiển thị kết quả API
     debugContainer.innerHTML += `
       <div class="error-card">
         <div>Dữ liệu phản hồi từ API:</div>
         <pre style="white-space: pre-wrap;">${JSON.stringify(result, null, 2)}</pre>
       </div>
-    `;
+    `;*/
     return result;
   } catch (error) {
     // Hiển thị lỗi nếu có
@@ -195,18 +202,17 @@ async function highlightErrors(errors: GrammarError[], context: Word.RequestCont
       const positions = matches.map((match, index) => ({
         startIndex: match.index!,
         text: match[0], // Lấy từ đã khớp
-        ordnumber: index, // Số thứ tự bắt đầu từ 1
+        ordnumber: index,
       }));
-
+      /*
       // Hiển thị nội dung của positions ra UI
       const positionsContainer = document.getElementById("debug-container");
       positionsContainer.innerHTML = positions
         .map((pos) => `<div> ${pos.text} (Vị trí từ: ${pos.startIndex}, Thứ tự: ${pos.ordnumber})</div>`)
-        .join("");
+        .join("");*/
 
       let position = positions.find((p) => p.startIndex == error.position);
-      positionsContainer.innerHTML += `Vị trí lỗi sai: <div> ${position.text} (Vị trí: ${position.startIndex}, Thứ tự: ${position.ordnumber})</div>`;
-
+      /*positionsContainer.innerHTML += `Vị trí lỗi sai: <div> ${position.text} (Vị trí: ${position.startIndex}, Thứ tự: ${position.ordnumber})</div>`;*/
       const range = selection.search(error.word, {
         matchCase: true,
         matchWholeWord: true,
@@ -214,6 +220,7 @@ async function highlightErrors(errors: GrammarError[], context: Word.RequestCont
       range.load("text");
       await context.sync();
 
+      /*
       // Thêm div mới để hiển thị thông tin về range
       const rangeInfo = document.createElement("div");
       rangeInfo.id = "range-info";
@@ -233,7 +240,7 @@ async function highlightErrors(errors: GrammarError[], context: Word.RequestCont
           )
           .join("")}
       `;
-
+      */
       if (range && range.items.length > 0 && position && range.items[position.ordnumber] != null) {
         range.items[position.ordnumber].font.color = "red";
       }
@@ -260,9 +267,6 @@ function updateStats(total: number, fixed: number) {
 function displayErrors(errors: GrammarError[]) {
   const container = document.getElementById("error-list");
   container.innerHTML = "";
-
-  // Lưu lại các lỗi hiện tại
-  stats.currentErrors = errors;
 
   errors.forEach((error, index) => {
     const card = document.createElement("div");
@@ -312,18 +316,17 @@ async function applySuggestion(event: Event) {
       await context.sync();
 
       let text = selection.text;
-      const word = stats.currentErrors[errorIndex].word;
+      const word = errorList[errorIndex].word;
       const regex = new RegExp(`(?<!\\w)${word}(?!\\w)`, "g");
       const matches = [...text.matchAll(regex)];
 
       const positions = matches.map((match, index) => ({
         startIndex: match.index!,
         text: match[0], // Lấy từ đã khớp
-        ordnumber: index, // Số thứ tự bắt đầu từ 1
+        ordnumber: index,
       }));
 
-      let position = positions.find((p) => p.startIndex == stats.currentErrors[errorIndex].position);
-      //positionsContainer.innerHTML = `<div> ${position.text} (Vị trí: ${position.startIndex}, Thứ tự: ${position.ordnumber + 1})</div>`;
+      let position = positions.find((p) => p.startIndex == errorList[errorIndex].position);
       const range = selection.search(word, {
         matchCase: true,
         matchWholeWord: true,
@@ -341,7 +344,7 @@ async function applySuggestion(event: Event) {
         const lengthDiff = wordFixed.length - word.length;
 
         // Cập nhật position cho các lỗi còn lại
-        stats.currentErrors.forEach((error, idx) => {
+        errorList.forEach((error, idx) => {
           if (idx > errorIndex && error.position > position.startIndex) {
             error.position += lengthDiff;
           }
@@ -365,4 +368,91 @@ async function applySuggestion(event: Event) {
     document.getElementById("error-list").innerHTML =
       `<div class="error-card" style="color: #d13438">Lỗi khi áp dụng gợi ý: ${error.message}</div>`;
   }
+}
+
+async function fixAll() {
+  if (!errorList.length) return; // Nếu không có lỗi, không làm gì cả
+
+  try {
+    await Word.run(async (context) => {
+      const selection = context.document.getSelection();
+      selection.load("text");
+      await context.sync();
+
+      for (let i = 0; i < errorList.length; i++) {
+        const wordFixed = errorList[i].suggestions[0]; // Lấy từ gợi ý đầu tiên
+        const word = errorList[i].word;
+        
+        const range = selection.search(word, {
+          matchCase: true,
+          matchWholeWord: true,
+        });
+        range.load("text");
+        await context.sync();
+
+        let text = selection.text;
+        const regex = new RegExp(`(?<!\\w)${word}(?!\\w)`, "g");
+        const matches = [...text.matchAll(regex)];
+
+        const positions = matches.map((match, index) => ({
+          startIndex: match.index!,
+          text: match[0], // Lấy từ đã khớp
+          ordnumber: index,
+        }));
+
+        let position = positions.find((p) => p.startIndex == errorList[i].position);
+        if (range && range.items.length > 0 && position && range.items[position.ordnumber] != null) {
+          range.items[position.ordnumber].insertText(wordFixed, Word.InsertLocation.replace);
+          range.items[position.ordnumber].font.color = "green";
+          await context.sync();
+          
+          //Không cần tính độ dài từ cũ và từ mới. Nếu thêm vào sẽ bị lệch vị trí
+          /*
+          // Tính toán độ chênh lệch độ dài giữa từ cũ và từ mới
+          const lengthDiff = wordFixed.length - word.length;
+
+          // Cập nhật position cho các lỗi còn lại
+          //Có thể lấy j từ i+1 vì error sẽ sắp xếp theo vị trí từ nhỏ đến lớn
+          for (let j: number = i + 1; j < errorList.length; j++) {
+            //kiểm tra cho an toàn
+            if (errorList[j].position > position.startIndex) { 
+              errorList[j].position += lengthDiff;
+            }
+          }*/
+
+          // Cập nhật UI và stats
+          stats.fixedErrors++;
+          stats.remainingErrors--;
+          updateStats(stats.totalErrors, stats.fixedErrors);
+        }
+      }
+      await context.sync();
+    });
+  } catch (error) {
+    document.getElementById("error-list").innerHTML =
+      `<div class="error-card" style="color: #d13438">Lỗi khi sửa tất cả: ${error.message}</div>`;
+  }
+}
+
+function acceptChanges() {
+  // Bỏ bôi màu các từ đã sửa trong Word
+  Word.run(async (context) => {
+    const selection = context.document.getSelection();
+    selection.load("text");
+    await context.sync();
+
+    const fixedWords = errorList.map((error) => error.suggestions[0]);
+    const range = selection.search(fixedWords.join("|"), {
+      matchCase: true,
+      matchWholeWord: true,
+    });
+    range.load("text");
+    await context.sync();
+
+    for (const item of range.items) {
+      item.font.color = ""; // Bỏ màu trong Word
+    }
+  });
+  document.getElementById("fix-all").style.display = "none"; // Ẩn nút sửa tất cả
+  document.getElementById("accept").style.display = "none"; // Ẩn nút xác nhận
 }
