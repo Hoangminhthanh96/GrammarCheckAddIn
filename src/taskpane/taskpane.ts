@@ -27,7 +27,7 @@ let errorList = [] as GrammarError[];
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Word) {
-    document.getElementById("sideload-msg").style.display = "none";
+    //document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
     document.getElementById("check-text").onclick = checkText;
     document.getElementById("fix-all").onclick = fixAll;
@@ -122,7 +122,7 @@ async function checkText() {
 
 async function grammarCheck(text: string): Promise<CheckResult> {
   const apiUrl = "https://spellcheck.vcntt.tech/spellcheck";
-  const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+  //const proxyUrl = "https://cors-anywhere.herokuapp.com/";
   const debugContainer = document.getElementById("debug-container");
 
   try {
@@ -133,8 +133,8 @@ async function grammarCheck(text: string): Promise<CheckResult> {
         <div style="word-break: break-all;">${text}</div>
       </div>
     `;*/
-
-    const response = await fetch(proxyUrl + apiUrl, {
+    //const response = await fetch(proxyUrl + apiUrl, {
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -243,6 +243,7 @@ async function highlightErrors(errors: GrammarError[], context: Word.RequestCont
       */
       if (range && range.items.length > 0 && position && range.items[position.ordnumber] != null) {
         range.items[position.ordnumber].font.color = "red";
+        
       }
     }
     await context.sync();
