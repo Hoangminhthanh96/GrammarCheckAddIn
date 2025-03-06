@@ -4,8 +4,8 @@ const devCerts = require("office-addin-dev-certs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
-const urlDev = "https://192.168.68.209/";
-const urlProd = "https://www.contoso.com/"; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
+const urlDev = "https://192.168.68.209:3000/";
+const urlProd = "https://hoangminhthanh96.github.io/GrammarCheckAddIn/"; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
 
 async function getHttpsOptions() {
   const httpsOptions = await devCerts.getHttpsServerOptions();
@@ -33,7 +33,7 @@ module.exports = async (env, options) => {
           test: /\.ts$/,
           exclude: /node_modules/,
           use: {
-            loader: "babel-loader"
+            loader: "babel-loader",
           },
         },
         {

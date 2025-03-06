@@ -1,0 +1,238 @@
+/* 
+ * Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
+ * See LICENSE in the project root for license information.
+ */
+
+ html,
+ body {
+     width: 100%;
+     height: 100%;
+     margin: 0;
+     padding: 0;
+ }
+ 
+ ul {
+     margin: 0;
+     padding: 0;
+ }
+ 
+ .ms-welcome__header {
+    padding: 20px;
+    padding-bottom: 30px;
+    padding-top: 100px;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    align-items: center;
+ }
+
+ .ms-welcome__main {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-flex-wrap: nowrap;
+    flex-wrap: nowrap;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-flex: 1 0 0;
+    flex: 1 0 0;
+    padding: 10px 20px;
+ }
+ 
+ .ms-welcome__main > h2 {
+     width: 100%;
+     text-align: center;
+ }
+ 
+ .ms-welcome__features {
+     list-style-type: none;
+     margin-top: 20px;
+ }
+ 
+ .ms-welcome__features.ms-List .ms-ListItem {
+     padding-bottom: 20px;
+     display: -webkit-flex;
+     display: flex;
+ }
+ 
+ .ms-welcome__features.ms-List .ms-ListItem > .ms-Icon {
+     margin-right: 10px;
+ }
+ 
+ .ms-welcome__action.ms-Button--hero {
+     margin-top: 30px;
+ }
+ 
+.ms-Button.ms-Button--hero .ms-Button-label {
+  color: #0078d7;
+}
+
+.ms-Button.ms-Button--hero:hover .ms-Button-label,
+.ms-Button.ms-Button--hero:focus .ms-Button-label{
+  color: #005a9e;
+  cursor: pointer;
+}
+
+b {
+    font-weight: bold;
+}
+
+.error { color: #d13438; }
+.success { color: #107c10; }
+.warning { color: #ff8c00; }
+
+#stats-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 5px;
+}
+
+.stat-card {
+    flex: 1;
+    padding: 5px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+    background: #fff;
+    /*min-width: 70px;*/
+}
+
+.stat-value {
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+#error-list{
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.error-card {
+    margin: 5px 0;
+    padding: 5px;
+    border: 1px solid rgb(223, 95, 95);
+    border-radius: 4px;
+    background: transparent;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.error-card.fixed {
+    border-color: #107c10;
+    background: #f0f7f0;
+    position: relative;
+}
+
+.error-card.fixed::after {
+    content: "✓";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #107c10;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.error-card.fixed .suggestion-chip {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.error-card.fixed .suggestion-chip:hover {
+    background: #f3f2f1;
+    transform: none;
+}
+
+.wrong-word-container {
+    margin-right: 10px;
+}
+
+.wrong-word {
+    border: 1px solid #d13438;
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.error-label {
+    color: #666;
+    margin-right: 2px;
+}
+
+.wrong-word span:last-child {
+    color: #d13438;
+    font-weight: bold;
+}
+
+.suggestions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    align-items: flex-start;
+}
+
+.suggestion-label {
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.suggestion-chip {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #f3f2f1;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.suggestion-chip:hover {
+    background: #e1dfdd;
+    transform: translateY(-1px);
+}
+
+#check-text {
+    width: 100%;
+    margin: 0px 0;
+    padding: 10px;
+    background: #0078d4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+#check-text:hover {
+    background: #106ebe;
+}
+
+#fix-all{
+    width: 100%;
+    margin: 0px 0;
+    padding: 10px;
+    background: #0078d4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+#fix-all:hover{
+    background: #106ebe;
+}
