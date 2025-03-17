@@ -24,36 +24,40 @@ let stats = {
   remainingErrors: 0,
 };
 let errorList = [] as GrammarError[];
-
 Office.onReady((info) => {
   if (info.host === Office.HostType.Word) {
-    //document.getElementById("sideload-msg").style.display = "none";
-    document.getElementById("app-body").style.display = "flex";
-    document.getElementById("check-text").onclick = checkText;
-    document.getElementById("fix-all").onclick = fixAll;
-    document.getElementById("accept").onclick = acceptChanges;
+    try {
+      document.getElementById("app-body").style.display = "flex";
+      document.getElementById("check-text").onclick = checkText;
+      document.getElementById("fix-all").onclick = fixAll;
+      document.getElementById("accept").onclick = acceptChanges;
+    } catch (error) {
+      console.error("Lỗi khi khởi tạo add-in:", error);
+      // Hiển thị thông báo lỗi cho người dùng
+      document.body.innerHTML = `
+        <div style="color: #d13438; padding: 20px; text-align: center;">
+          <h2>Đã xảy ra lỗi khi khởi tạo add-in</h2>
+          <p>Vui lòng thử tải lại add-in hoặc liên hệ hỗ trợ.</p>
+          <p>Chi tiết lỗi: ${error.message}</p>
+        </div>
+      `;
+    }
   }
 });
 
 async function checkText() {
   try {
-    /*
     // Reset tất cả thông tin từ lần kiểm tra trước
     stats = {
       totalErrors: 0,
       fixedErrors: 0,
       remainingErrors: 0,
-      currentErrors: [],
     };
     
     // Xóa nội dung các container hiển thị
     document.getElementById("error-list").innerHTML = "";
-    document.getElementById("positions-list").innerHTML = "";
-    const rangeInfo = document.getElementById("range-info");
-    if (rangeInfo) {
-      rangeInfo.remove();
-    }
-    */
+    document.getElementById("fix-all").style.display = "none";
+    
     // Hiển thị biểu tượng loading
     document.getElementById("loading").style.display = "block";
 
@@ -64,76 +68,42 @@ async function checkText() {
       await context.sync();
 
       if (!selection.text || selection.text.trim() === "") {
-        // Hiển thị thông báo nếu không có text được chọn
         document.getElementById("error-list").innerHTML =
           '<div class="error-card" style="color: #d13438">Vui lòng chọn đoạn văn bản cần kiểm tra</div>';
         return;
       }
 
       const result = await grammarCheck(selection.text);
-      /*const result = {
-        status: "success",
-        has_errors: true,
-        errors: [
-          {
-            word: "ẫn",
-            suggestions: ["dẫn"],
-            position: 343,
-          },
-          {
-            word: "chãy",
-            suggestions: ["chảy"],
-            position: 502,
-          },
-          {
-            word: "vậc",
-            suggestions: ["vật", "vã", "trở", "về", "vội", "vã", "ra", "đi"],
-            position: 671,
-          },
-          {
-            word: "củ",
-            suggestions: ["cũ"],
-            position: 1082,
-          },
-        ],
-        corrected_text:
-          "Trong một ngôi làng nhỏ nằm giữa những ngọn đồi trập trùng, có một cậu bé tên là Nam. Cậu sống cùng ông bà trong một căn nhà gỗ nhỏ bé nhưng ấm cúng. Hằng ngày, Nam thường dậy từ sớm để phụ giúp ông bà làm việc nhà, sau đó cậu lại chạy ra đồng chơi đùa cùng lũ bạn. Một hôm, khi đang chơi gần bìa rừng, Nam vô tình phát hiên một con đường nhỏ dẫn sau những bụi cây rậm rạp. Vì tò mò, cậu quyết định đi theo con đường ấy mà không hề báo với ai. \nĐi được một đoạn, Nam bắt gặp một con suối trong vắt, nước chảy róc rách nghe thật vui tai. Bên cạnh con suối là một cái cây cổ thụ to lớn, trên cành cây có một cái tổ chim với mấy chú chim non đang đợi mẹ mang thức ăn về. Cảnh vật xung quanh thật đẹp làm Nam mê mẫng, cậu cứ đứng đó ngắm nhìn mà quên mất thời gian. Đến khi mặt trời bắt đầu khuất sau những rặng cây, Nam mới giật mình nhớ ra rằng mình đã đi quá xa. \nCậu vội vã quay trở về, nhưng càng đi càng thấy mọi thứ xung quanh trở nên lạ lấm. Nam hoang mang, không biết phải làm sao. Đúng lúc đó, cậu nghe thấy tiếng gọi quen thuộc của ông. Nhờ vào tiếng gọi ấy, Nam lần theo đường cũ và tìm được lối ra khỏi rừng. Khi trở về nhà, ông bà trách mắng Nam một hồi, nhưng sau cùng vẫn ôm cậu vào lòng, dặn dò cậu rằng lần sau không được tự ý đi vào rừng nửa. Nam gật đầu lia lịa, tự hứa với mình rằng sẽ không bao giờ để bản thân rơi vào tình huống như vậy lần nào nửa. ",
-        processing_time: 1.7545,
-      };*/
       if (result.status === "success") {
-        // Lưu lại các lỗi hiện tại
         errorList = result.errors;
-        updateStats(result.errors.length, 0);
-        await highlightErrors(result.errors, context);
-        displayErrors(result.errors);
-        document.getElementById("fix-all").style.display = "block"; // Hiển thị nút sửa tất cả
-        //document.getElementById("accept").style.display = "block"; // Hiển thị nút xác nhận
+        
+        if (errorList.length === 0) {
+          document.getElementById("error-list").innerHTML =
+            '<div class="error-card" style="color: #107c10; border-color: #107c10">Không tìm thấy lỗi chính tả trong văn bản đã chọn.</div>';
+        } else {
+          updateStats(result.errors.length, 0);
+          await highlightErrors(result.errors, context);
+          displayErrors(result.errors);
+          document.getElementById("fix-all").style.display = "block";
+        }
       }
     });
   } catch (error) {
-    // Hiển thị thông báo lỗi cho người dùng
     document.getElementById("error-list").innerHTML =
       `<div class="error-card" style="color: #d13438">Đã xảy ra lỗi: ${error.message}</div>`;
   } finally {
-    // Ẩn biểu tượng loading
     document.getElementById("loading").style.display = "none";
   }
 }
 
 async function grammarCheck(text: string): Promise<CheckResult> {
   const apiUrl = "https://spellcheck.vcntt.tech/spellcheck";
-  //const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-  const debugContainer = document.getElementById("debug-container");
-
+  //const apiUrl = "https://httpbin.org/delay/11"; //test timeout
+  //const proxyUrl = "https://cors-anywhere.herokuapp.com/";   
   try {
-    /*// Hiển thị thông tin request
-    debugContainer.innerHTML = `
-      <div class="error-card">
-        <div>Đang gọi API với text:</div>
-        <div style="word-break: break-all;">${text}</div>
-      </div>
-    `;*/
-    //const response = await fetch(proxyUrl + apiUrl, {
+    // Thêm timeout cho fetch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
@@ -141,46 +111,25 @@ async function grammarCheck(text: string): Promise<CheckResult> {
       },
       mode: "cors",
       body: JSON.stringify({ text: text }),
+      signal: controller.signal
     });
-
-    /*// Hiển thị thông tin response status
-    debugContainer.innerHTML += `
-      <div class="error-card">
-        <div>Trạng thái phản hồi API:</div>
-        <div>Status: ${response.status}</div>
-        <div>StatusText: ${response.statusText}</div>
-      </div>
-    `;*/
-
+    
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      /*// Hiển thị chi tiết lỗi
-      debugContainer.innerHTML += `
-        <div class="error-card" style="color: #d13438">
-          <div>Lỗi từ API:</div>
-          <div>${errorText}</div>
-        </div>
-      `;*/
-      throw new Error(`API error: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
 
-    const result = await response.json();
-    /*// Hiển thị kết quả API
-    debugContainer.innerHTML += `
-      <div class="error-card">
-        <div>Dữ liệu phản hồi từ API:</div>
-        <pre style="white-space: pre-wrap;">${JSON.stringify(result, null, 2)}</pre>
-      </div>
-    `;*/
-    return result;
+    return await response.json();
   } catch (error) {
-    // Hiển thị lỗi nếu có
-    debugContainer.innerHTML += `
-      <div class="error-card" style="color: #d13438">
-        <div>Lỗi khi gọi API kiểm tra ngữ pháp:</div>
-        <div>${error.message}</div>
-      </div>
-    `;
+    if (error.name === 'AbortError') {
+      document.getElementById("error-list").innerHTML = 
+        '<div class="error-card" style="color: #d13438">Kết nối đến API bị timeout. Vui lòng thử lại sau.</div>';
+    } else {
+      document.getElementById("error-list").innerHTML = 
+        `<div class="error-card" style="color: #d13438">Lỗi khi gọi API: ${error.message}</div>`;
+    }
+    
     return {
       status: "error",
       errors: [],
@@ -204,15 +153,8 @@ async function highlightErrors(errors: GrammarError[], context: Word.RequestCont
         text: match[0], // Lấy từ đã khớp
         ordnumber: index,
       }));
-      /*
-      // Hiển thị nội dung của positions ra UI
-      const positionsContainer = document.getElementById("debug-container");
-      positionsContainer.innerHTML = positions
-        .map((pos) => `<div> ${pos.text} (Vị trí từ: ${pos.startIndex}, Thứ tự: ${pos.ordnumber})</div>`)
-        .join("");*/
 
       let position = positions.find((p) => p.startIndex == error.position);
-      /*positionsContainer.innerHTML += `Vị trí lỗi sai: <div> ${position.text} (Vị trí: ${position.startIndex}, Thứ tự: ${position.ordnumber})</div>`;*/
       const range = selection.search(error.word, {
         matchCase: true,
         matchWholeWord: true,
@@ -220,27 +162,6 @@ async function highlightErrors(errors: GrammarError[], context: Word.RequestCont
       range.load("text");
       await context.sync();
 
-      /*
-      // Thêm div mới để hiển thị thông tin về range
-      const rangeInfo = document.createElement("div");
-      rangeInfo.id = "range-info";
-      positionsContainer.appendChild(rangeInfo);
-      rangeInfo.innerHTML = `
-        <div>Thông tin về Range:</div>
-        <div>Tổng số kết quả tìm thấy: ${range.items.length}</div>
-        ${range.items
-          .map(
-            (item, index) => `
-          <div>Kết quả #${index}:
-            <ul>
-              <li>Văn bản: ${item.text}</li>
-            </ul>
-          </div>
-        `
-          )
-          .join("")}
-      `;
-      */
       if (range && range.items.length > 0 && position && range.items[position.ordnumber] != null) {
         range.items[position.ordnumber].font.color = "red";
         

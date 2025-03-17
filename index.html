@@ -4,10 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Office Add-in Deployment</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .download-button {
+            display: inline-block;
+            background-color: #0078d4;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .note {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-left: 4px solid #0078d4;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Word Add-in Task Pane</h1>
-    <p>Hãy mở Word và sử dụng Add-in bằng cách tải `manifest.xml`.</p>
-    <a href="manifest.xml" download>📥 Tải Manifest</a>
+    <h1>Word Add-in Kiểm Tra Chính Tả</h1>
+    <p>Hãy mở Word và sử dụng Add-in bằng cách tải manifest.xml.</p>
+    
+    <div class="note">
+        <p><strong>Lưu ý:</strong> Nếu bạn đang sử dụng add-in trong môi trường phát triển (localhost), hãy tải manifest.xml. Nếu bạn muốn sử dụng phiên bản đã triển khai, hãy tải dist/manifest.xml.</p>
+    </div>
+    
+    <a href="manifest.xml" class="download-button" download>📥 Tải Manifest (Dev)</a>
+    <a href="dist/manifest.xml" class="download-button" download>📥 Tải Manifest (Production)</a>
 </body>
 </html>

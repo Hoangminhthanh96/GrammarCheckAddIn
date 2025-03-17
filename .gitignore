@@ -1,1 +1,47 @@
+# Node modules
 node_modules/
+package-lock.json
+yarn.lock
+
+# Build output
+dist/
+out/
+.tmp/
+build/
+
+# Office Add-in manifest cache
+.wef/
+
+# TypeScript compiled files
+*.js
+*.js.map
+*.d.ts
+
+# Logs
+npm-debug.log*
+yarn-error.log
+lerna-debug.log
+*.log
+
+# Coverage reports
+coverage/
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Office Add-in Sideloading files
+~$*.xml
+*.manifest.xml
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# Temporary files
+Thumbs.db
+.DS_Store
